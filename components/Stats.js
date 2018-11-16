@@ -1,12 +1,21 @@
 import React, { Component } from "react";
-import { Button, Container, Content, Header, Icon, Text } from "native-base";
-import { AsyncStorage } from "react-native";
+import {
+  Button,
+  H3,
+  Container,
+  Content,
+  Header,
+  Icon,
+  Text
+} from "native-base";
+import { AsyncStorage, View } from "react-native";
+import startCase from "lodash.startcase";
 
 import theme from "../theme";
+import { getStats, clearGameData } from "../gameData";
 
 type Props = {};
 
-const STORAGE_KEY = "@hotlist:data";
 class Stats extends Component<Props> {
   static navigationOptions = {
     drawerLabel: "Stats",
@@ -15,18 +24,44 @@ class Stats extends Component<Props> {
     )
   };
 
+  state = {};
+
+  async componentDidMount() {
+    const stats = await getStats();
+    console.log("stats", stats);
+    this.setState({ stats });
+  }
+
   onClearStats = async () => {
-    await AsyncStorage.removeItem(STORAGE_KEY);
+    await clearGameData();
   };
 
   render() {
+    if (!this.state.stats) return null;
+
     return (
       <Container style={{ backgroundColor: theme.backgroundColor }}>
         <Header transparent>
           <Text style={{ color: theme.foregroundColor }}>Stats</Text>
         </Header>
-        <Content>
-          <Button danger onPress={this.onClearState}>
+        <Content style={{ paddingLeft: 10, paddingRight: 10 }}>
+          {Object.keys(this.state.stats).map(stat => (
+            <View
+              style={{
+                paddingBottom: 10,
+                flexDirection: "row",
+                justifyContent: "space-between"
+              }}
+            >
+              <H3 style={{ color: theme.foregroundColor }}>
+                {startCase(stat)}
+              </H3>
+              <Text style={{ color: theme.foregroundColor }}>
+                {this.state.stats[stat]}
+              </Text>
+            </View>
+          ))}
+          <Button style={{ marginTop: 10 }} danger onPress={this.onClearStats}>
             <Text>Clear stats</Text>
           </Button>
         </Content>

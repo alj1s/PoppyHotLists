@@ -1,15 +1,17 @@
 import React, { Component } from "react";
+import { View, StatusBar } from "react-native";
 import { createDrawerNavigator } from "react-navigation";
 import { Icon } from "native-base";
 
 import { Game, Settings, Stats } from "./components";
 import theme from "./theme";
 
-let hotList = "All";
-
-const onHotListChanged = newList => (hotList = newList);
-
-const GameNavigator = () => <Game hotList={hotList} />;
+const GameNavigator = props => (
+  <Game
+    hotList={props.screenProps.hotList}
+    numberOfCards={props.screenProps.numberOfCards}
+  />
+);
 
 GameNavigator.navigationOptions = {
   drawerLabel: "Game",
@@ -18,8 +20,13 @@ GameNavigator.navigationOptions = {
   )
 };
 
-const SettingsNavigator = () => (
-  <Settings onHotListChanged={onHotListChanged} />
+const SettingsNavigator = props => (
+  <Settings
+    hotList={props.screenProps.hotList}
+    numberOfCards={props.screenProps.numberOfCards}
+    onHotListChanged={props.screenProps.onHotListChanged}
+    onNumberOfCardsChanged={props.screenProps.onNumberOfCardsChanged}
+  />
 );
 
 SettingsNavigator.navigationOptions = {
@@ -53,4 +60,31 @@ const HotListApp = createDrawerNavigator(
   }
 );
 
-export default props => <HotListApp />;
+export default class extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      hotList: "All",
+      numberOfCards: 10
+    };
+  }
+
+  onHotListChanged = newList => this.setState({ hotList: newList });
+  onNumberOfCardsChanged = numberOfCards => this.setState({ numberOfCards });
+
+  render() {
+    return (
+      <React.Fragment>
+        <StatusBar barStyle="light-content" />
+        <HotListApp
+          screenProps={{
+            onHotListChanged: this.onHotListChanged,
+            onNumberOfCardsChanged: this.onNumberOfCardsChanged,
+            numberOfCards: this.state.numberOfCards,
+            hotList: this.state.hotList
+          }}
+        />
+      </React.Fragment>
+    );
+  }
+}

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { AsyncStorage, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 
 import {
   Body,
@@ -15,71 +15,57 @@ import {
   View
 } from "native-base";
 
-import hotLists from "../cards";
+import {
+  getPercentage,
+  getLeastFamiliarCards,
+  getGameCards,
+  getGameData,
+  saveGameData
+} from "../gameData";
+
 import theme from "../theme";
-
-const STORAGE_KEY = "@hotlist:data";
-const cardsPerRound = 10;
-
-const getPercentage = card =>
-  card.appearances === 0
-    ? card.appearances
-    : card.correctGuesses / card.appearances;
-
-const getLeastFamiliarCards = gameData =>
-  gameData
-    .sort((a, b) => getPercentage(a) - getPercentage(b))
-    .slice(0, cardsPerRound);
-
-const getGameCards = color => {
-  if (!!color && color != "All") {
-    return hotLists[color].map(word => ({
-      color,
-      word,
-      appearances: 0,
-      correctGuesses: 0
-    }));
-  }
-  return Object.keys(hotLists).reduce((acc, color) => {
-    return acc.concat(
-      hotLists[color].map(word => ({
-        color,
-        word,
-        appearances: 0,
-        correctGuesses: 0
-      }))
-    );
-  }, []);
-};
-
-const getGameData = async selectedList => {
-  const savedData = await AsyncStorage.getItem(STORAGE_KEY);
-  if (!!savedData) return JSON.parse(savedData);
-  return getGameCards(selectedList);
-};
 
 type Props = {};
 
 class Game extends Component<Props> {
   async componentDidMount() {
-    const gameData = await getGameData();
+    const gameData =
+      this.props.hotList === "All"
+        ? await getGameData()
+        : getGameCards(this.props.hotList);
     this.setState({
       gameData,
-      deck: getLeastFamiliarCards(gameData)
+      deck: getLeastFamiliarCards(gameData, this.props.numberOfCards),
+      hotList: this.props.hotList,
+      numberOfCards: this.props.numberOfCards
     });
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    if (prevState.hotList && nextProps.hotList !== prevState.hotList) {
+    if (!prevState.hotList) return null;
+    if (
+      nextProps.hotList !== prevState.hotList ||
+      nextProps.numberOfCards !== prevState.numberOfCards
+    ) {
       const gameData = getGameCards(nextProps.hotList);
-      console.log("Returning new state");
       return {
         gameData,
-        deck: getLeastFamiliarCards(gameData),
-        hotList: nextProps.hotList
+        deck: getLeastFamiliarCards(gameData, nextProps.numberOfCards),
+        hotList: nextProps.hotList,
+        numberOfCards: nextProps.numberOfCards
       };
     } else {
       return null;
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.hotList !== this.props.hotList) {
+      this.setState({ hotList: this.props.hotList });
+    }
+
+    if (prevProps.numberOfCards !== this.props.numberOfCards) {
+      this.setState({ numberOfCards: this.props.numberOfCards });
     }
   }
 
@@ -98,22 +84,22 @@ class Game extends Component<Props> {
 
   restart = async () => {
     if (this.swiper) {
-      const newDeck = getLeastFamiliarCards(this.state.gameData);
-      this.setState({ deck: newDeck });
+      const newDeck = getLeastFamiliarCards(
+        this.state.gameData,
+        this.props.numberOfCards
+      );
       this.swiper.wrappedInstance.setState({
         lastCard: false,
         disabled: false,
         selectedItem: newDeck[0],
         selectedItem2: newDeck[1]
       });
+
+      this.currentRound.correctAnswers = 0;
+
+      await saveGameData(this.state.gameData);
+      this.setState({ deck: newDeck });
     }
-
-    this.currentRound.correctAnswers = 0;
-
-    await AsyncStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(this.state.gameData)
-    );
   };
 
   render() {
@@ -161,7 +147,9 @@ class Game extends Component<Props> {
                       color: "#fff"
                     }}
                   >
-                    Score: {this.currentRound.correctAnswers}/{cardsPerRound}
+                    Score: {this.currentRound.correctAnswers}/{
+                      this.props.numberOfCards
+                    }
                   </Text>
                   <Right />
                 </CardItem>

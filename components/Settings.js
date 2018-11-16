@@ -9,10 +9,11 @@ import {
   Icon,
   ListItem,
   Left,
-  Picker,
   Right,
   Text
 } from "native-base";
+
+import Picker from "./Picker";
 
 import theme from "../theme";
 import hotLists from "../cards";
@@ -20,9 +21,13 @@ import hotLists from "../cards";
 type Props = {};
 
 class Settings extends Component<Props> {
-  state = {
-    selectedHotList: "All"
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedHotList: props.hotList,
+      numberOfCards: props.numberOfCards
+    };
+  }
 
   onHotListChanged = newList => {
     this.setState({ selectedHotList: newList });
@@ -53,15 +58,6 @@ class Settings extends Component<Props> {
               </Body>
               <Right>
                 <Picker
-                  mode="dropdown"
-                  iosIcon={
-                    <Icon
-                      style={{ color: theme.foregroundColor }}
-                      name="ios-arrow-down-outline"
-                    />
-                  }
-                  style={{ width: undefined }}
-                  textStyle={{ color: theme.foregroundColor }}
                   placeholder="Select hot list"
                   placeholderStyle={{ color: theme.settingPlaceholderColor }}
                   placeholderIconColor={theme.settingPlaceholderColor}
@@ -86,7 +82,20 @@ class Settings extends Component<Props> {
                   Cards per game
                 </Text>
               </Body>
-              <Right />
+              <Right>
+                <Picker
+                  placeholder="Select cards per game"
+                  placeholderStyle={{ color: theme.settingPlaceholderColor }}
+                  placeholderIconColor={theme.settingPlaceholderColor}
+                  selectedValue={this.state.numberOfCards}
+                  onValueChange={this.onNumberOfCardsChanged}
+                >
+                  <Picker.Item label={5} value={5} />
+                  <Picker.Item label={10} value={10} />
+                  <Picker.Item label={15} value={15} />
+                  <Picker.Item label={20} value={20} />
+                </Picker>
+              </Right>
             </ListItem>
           </Form>
         </Content>

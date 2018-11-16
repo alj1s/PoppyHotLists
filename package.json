@@ -7,7 +7,9 @@
     "test": "jest"
   },
   "dependencies": {
+    "lodash.startcase": "^4.4.0",
     "native-base": "^2.8.1",
+    "ramda": "^0.25.0",
     "react": "16.5.0",
     "react-native": "0.57.2",
     "react-navigation": "^2.18.0"
